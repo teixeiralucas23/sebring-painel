@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import type { Cenario, Dados, Lancamento, Risco, Socio, Status } from "@/lib/types";
-import { STATUS_LABEL } from "@/lib/types";
-import { fmt, pct, resumo } from "@/lib/calc";
+import type { Ativo, Cenario, Dados, Lancamento, Risco, Socio, Status } from "@/lib/types";
+import { CATEGORIAS_ATIVO, STATUS_LABEL } from "@/lib/types";
+import { fmt, pct, resumo, resumoAtivos } from "@/lib/calc";
 import { restaurar, salvar } from "./actions";
 
 const STATUS = Object.keys(STATUS_LABEL) as Status[];
@@ -47,6 +47,7 @@ export default function Editor({ inicial, versao, historico }: { inicial: Dados;
   const [pendente, start] = useTransition();
   const sujo = JSON.stringify(d) !== salvo;
   const r = useMemo(() => resumo(d), [d]);
+  const at = useMemo(() => resumoAtivos(d), [d]);
 
   useEffect(() => {
     const aviso = (e: BeforeUnloadEvent) => { if (sujo) e.preventDefault(); };
@@ -58,12 +59,12 @@ export default function Editor({ inicial, versao, historico }: { inicial: Dados;
   const set = <K extends keyof Dados>(k: K, v: Dados[K]) => setD((x) => ({ ...x, [k]: v }));
   const proj = (k: keyof Dados["projeto"], v: string) => set("projeto", { ...d.projeto, [k]: v });
   const prem = <K extends keyof Dados["premissas"]>(k: K, v: Dados["premissas"][K]) => set("premissas", { ...d.premissas, [k]: v });
-  function editarLista<T>(k: "socios" | "lancamentos" | "cenarios" | "riscos", i: number, campo: keyof T, v: unknown) {
+  function editarLista<T>(k: "socios" | "lancamentos" | "cenarios" | "riscos" | "ativos", i: number, campo: keyof T, v: unknown) {
     const lista = [...(d[k] as unknown as T[])];
     lista[i] = { ...lista[i], [campo]: v };
     set(k, lista as never);
   }
-  const remover = (k: "socios" | "lancamentos" | "cenarios" | "riscos", i: number) => set(k, (d[k] as unknown[]).filter((_, j) => j !== i) as never);
+  const remover = (k: "socios" | "lancamentos" | "cenarios" | "riscos" | "ativos", i: number) => set(k, (d[k] as unknown[]).filter((_, j) => j !== i) as never);
 
   function onSalvar() {
     setMsg(null);
@@ -205,6 +206,46 @@ export default function Editor({ inicial, versao, historico }: { inicial: Dados;
             if (dias.length) set("sensibilidade", { ...d.sensibilidade, dias });
           }} />
         </Campo>
+      </div>
+
+      <h2>Outros ativos <span className="en">— bolsas, joias, relógios, barcos, arte, ouro, colecionáveis · não entram no lucro do projeto</span></h2>
+      <div className="card">
+        <div className="mini" style={{ marginBottom: 12 }}>
+          <div><span>Valor atual</span><b>{fmt(at.total)}</b></div>
+          <div><span>Custo</span><b>{fmt(at.custo)}</b></div>
+          <div><span>Valorização</span><b className={at.valorizacao >= 0 ? "pos" : "neg"}>{fmt(at.valorizacao)}</b></div>
+          <div><span>Itens</span><b>{d.ativos.length}</b></div>
+        </div>
+        {d.ativos.length === 0 && <p className="dica" style={{ marginBottom: 10 }}>Nenhum ativo cadastrado. A seção só aparece no painel quando houver pelo menos um item.</p>}
+        {d.ativos.length > 0 && (
+          <div className="scroll">
+            <table className="ed" style={{ minWidth: 1100 }}>
+              <thead><tr><th>Item</th><th style={{ width: 160 }}>Categoria</th><th style={{ width: 150 }}>Dono</th><th style={{ width: 140 }}>Aquisição</th><th style={{ width: 115 }}>Custo</th><th style={{ width: 115 }}>Valor atual</th><th>Observação</th><th style={{ width: 40 }}></th></tr></thead>
+              <tbody>
+                {d.ativos.map((a, i) => (
+                  <tr key={a.id}>
+                    <td><input className="in" value={a.nome} placeholder="Ex.: Rolex Submariner" onChange={(e) => editarLista<Ativo>("ativos", i, "nome", e.target.value)} /></td>
+                    <td>
+                      <select className="in" value={a.categoria} onChange={(e) => editarLista<Ativo>("ativos", i, "categoria", e.target.value)}>
+                        {CATEGORIAS_ATIVO.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </td>
+                    <td><input className="in" value={a.dono} list="donos" placeholder="Sócio / empresa" onChange={(e) => editarLista<Ativo>("ativos", i, "dono", e.target.value)} /></td>
+                    <td><input className="in" type="date" value={a.dataAquisicao} onChange={(e) => editarLista<Ativo>("ativos", i, "dataAquisicao", e.target.value)} /></td>
+                    <td><Num value={a.custo} step={100} onChange={(v) => editarLista<Ativo>("ativos", i, "custo", v)} /></td>
+                    <td><Num value={a.valorAtual} step={100} onChange={(v) => editarLista<Ativo>("ativos", i, "valorAtual", v)} /></td>
+                    <td><input className="in" value={a.observacao} placeholder="Nº de série, certificado, onde está…" onChange={(e) => editarLista<Ativo>("ativos", i, "observacao", e.target.value)} /></td>
+                    <td><button className="btn x" title="Remover" onClick={() => confirm(`Remover "${a.nome || "este item"}"?`) && remover("ativos", i)}>✕</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <datalist id="donos">
+              {["OPD Development LLC", ...d.socios.map((s) => s.nome)].map((n) => <option key={n} value={n} />)}
+            </datalist>
+          </div>
+        )}
+        <button className="btn cinza" style={{ marginTop: 12 }} onClick={() => set("ativos", [...d.ativos, { id: "a" + Date.now().toString(36), nome: "", categoria: "Bolsas", dono: "", dataAquisicao: "", custo: 0, valorAtual: 0, observacao: "" }])}>+ Adicionar ativo</button>
       </div>
 
       <h2>Riscos</h2>

@@ -1,8 +1,8 @@
 import { lerPainel } from "@/lib/db";
-import { dataCurta, dataLonga, diasEntre, fmt, pct, resumo } from "@/lib/calc";
+import { dataCurta, dataLonga, diasEntre, fmt, pct, resumo, resumoAtivos } from "@/lib/calc";
 import { STATUS_LABEL, type Status } from "@/lib/types";
 import Simulador from "./Simulador";
-import { Cenarios, Composicao, Curva } from "./Graficos";
+import { Cenarios, Composicao, Curva, Pizza } from "./Graficos";
 import { nomeExibicao } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +14,7 @@ export default async function Pagina() {
   const { dados: d, atualizadoEm, atualizadoPor } = await lerPainel();
   const p = d.premissas;
   const r = resumo(d);
+  const at = resumoAtivos(d);
   const { m } = r;
   const N = m.N;
   const pctS = d.socios[0]?.percentual ?? 0;
@@ -232,6 +233,46 @@ export default async function Pagina() {
             ))}
           </div>
         </div>
+        {d.ativos.length > 0 && (
+          <>
+            <h2>Outros ativos <span className="en">— bens fora do projeto das casas · não entram no lucro do projeto</span></h2>
+            <div className="grid g4">
+              <div className="kpi"><div className="lab">Valor atual</div><div className="val">{fmt(at.total)}</div><div className="note">{d.ativos.length} {d.ativos.length === 1 ? "item" : "itens"}</div></div>
+              <div className="kpi"><div className="lab">Custo de aquisição</div><div className="val">{fmt(at.custo)}</div><div className="note">Valor pago</div></div>
+              <div className={"kpi " + (at.valorizacao >= 0 ? "good" : "warn")}><div className="lab">Valorização</div><div className={"val " + (at.valorizacao >= 0 ? "pos" : "neg")}>{fmt(at.valorizacao)}</div><div className="note">{at.custo ? pct(at.valorizacaoPct) + " sobre o custo" : "—"}</div></div>
+              <div className="kpi"><div className="lab">Maior categoria</div><div className="val" style={{ fontSize: 21 }}>{at.porCategoria[0]?.categoria ?? "—"}</div><div className="note">{at.porCategoria[0] && at.total ? `${fmt(at.porCategoria[0].valor)} · ${pct(at.porCategoria[0].valor / at.total, 0)} do total` : ""}</div></div>
+            </div>
+            <div className="grid g21" style={{ marginTop: 16 }}>
+              <div className="card scroll" style={{ padding: 0 }}>
+                <table>
+                  <thead><tr><th>Categoria</th><th className="c">Itens</th><th className="r">Custo</th><th className="r">Valor atual</th><th className="r">Variação</th></tr></thead>
+                  <tbody>
+                    {at.porCategoria.map((g) => (
+                      <tr key={g.categoria}><td>{g.categoria}</td><td className="c">{g.qtd}</td><td className="r">{fmt(g.custo)}</td><td className="r">{fmt(g.valor)}</td><td className={"r " + (g.valor - g.custo >= 0 ? "pos" : "neg")}>{g.custo ? pct((g.valor - g.custo) / g.custo) : "—"}</td></tr>
+                    ))}
+                    <tr className="tot"><td>Total</td><td className="c">{d.ativos.length}</td><td className="r">{fmt(at.custo)}</td><td className="r">{fmt(at.total)}</td><td className={"r " + (at.valorizacao >= 0 ? "pos" : "neg")}>{at.custo ? pct(at.valorizacaoPct) : "—"}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="card"><Pizza titulo={`Valor por categoria — ${fmt(at.total)}`} itens={at.porCategoria.map((g) => ({ label: g.categoria, valor: g.valor }))} /></div>
+            </div>
+            <div className="card scroll" style={{ padding: 0, marginTop: 16 }}>
+              <table>
+                <thead><tr><th>Item</th><th>Categoria</th><th>Dono</th><th>Aquisição</th><th className="r">Custo</th><th className="r">Valor atual</th><th className="r">Variação</th><th>Observação</th></tr></thead>
+                <tbody>
+                  {[...d.ativos].sort((a, b) => a.categoria.localeCompare(b.categoria) || b.valorAtual - a.valorAtual).map((a) => (
+                    <tr key={a.id}>
+                      <td><b>{a.nome}</b></td><td>{a.categoria}</td><td>{a.dono || "—"}</td><td style={{ whiteSpace: "nowrap" }}>{a.dataAquisicao ? dataCurta(a.dataAquisicao) : "—"}</td>
+                      <td className="r">{fmt(a.custo)}</td><td className="r">{fmt(a.valorAtual)}</td>
+                      <td className={"r " + (a.valorAtual - a.custo >= 0 ? "pos" : "neg")}>{a.custo ? pct((a.valorAtual - a.custo) / a.custo) : "—"}</td>
+                      <td style={{ fontSize: 12, color: "#5a6a85" }}>{a.observacao}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
         <div className="foot">
           {d.projeto.rodape}
           <br />Última atualização: {atualizado}, por {nomeExibicao(atualizadoPor)}.

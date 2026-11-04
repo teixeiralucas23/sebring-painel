@@ -56,6 +56,7 @@ export const SEED: Dados = {
     passo: 5000,
     dias: [30, 60, 90, 120, 150, 180, 240],
   },
+  ativos: [],
   riscos: [
     { titulo: "Tempo no mercado", texto: "Cada dia extra custa ~$90 em juros nas duas casas. Vender em 180 dias em vez de 90 reduz o lucro em ~$8.200." },
     { titulo: "Preço de venda", texto: "Cada $1.000 a menos no preço tira $1.880 do lucro total (preço líquido de 6% de closing, × 2 casas)." },

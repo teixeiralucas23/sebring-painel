@@ -84,3 +84,27 @@ export function Curva({ labels, equity, caixa, divida }: { labels: string[]; equ
     />
   );
 }
+
+export function Pizza({ titulo: t, itens }: { titulo: string; itens: { label: string; valor: number }[] }) {
+  const total = itens.reduce((a, b) => a + b.valor, 0) || 1;
+  return (
+    <Doughnut
+      data={{
+        labels: itens.map((i) => i.label),
+        datasets: [{
+          data: itens.map((i) => Math.round(i.valor)),
+          backgroundColor: ["#1f3864", "#c9821a", "#2d5490", "#1e8e5a", "#e0a020", "#4a7fbf", "#c0392b", "#8a5a06", "#8494ab"],
+          borderWidth: 2, borderColor: "#fff",
+        }],
+      }}
+      options={{
+        cutout: "52%",
+        plugins: {
+          title: titulo(t),
+          legend: { position: "right", labels: { boxWidth: 11, padding: 9 } },
+          tooltip: { callbacks: { label: (c) => ` ${c.label}: ${fmt(c.parsed)} (${((c.parsed / total) * 100).toFixed(1)}%)` } },
+        },
+      }}
+    />
+  );
+}

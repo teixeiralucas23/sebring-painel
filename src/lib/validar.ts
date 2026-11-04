@@ -1,4 +1,4 @@
-import type { Dados, Status } from "./types";
+import { CATEGORIAS_ATIVO, type CategoriaAtivo, type Dados, type Status } from "./types";
 import { SEED } from "./seed";
 
 const STATUS: Status[] = ["realizado", "proximo", "programado", "marco"];
@@ -70,6 +70,20 @@ export function validar(entrada: unknown): Dados {
       passo: Math.max(500, num(se.passo, SEED.sensibilidade.passo)),
       dias: dias.length ? dias : SEED.sensibilidade.dias,
     },
+    ativos: lista(e.ativos, 500).map((a, i) => {
+      const o = obj(a);
+      const cat = CATEGORIAS_ATIVO.includes(o.categoria as CategoriaAtivo) ? (o.categoria as CategoriaAtivo) : "Outros";
+      return {
+        id: txt(o.id, "", 40) || `a${Date.now()}${i}`,
+        nome: txt(o.nome, "", 200),
+        categoria: cat,
+        dono: txt(o.dono, "", 120),
+        dataAquisicao: typeof o.dataAquisicao === "string" && o.dataAquisicao ? data(o.dataAquisicao, "") : "",
+        custo: num(o.custo),
+        valorAtual: num(o.valorAtual),
+        observacao: txt(o.observacao, "", 500),
+      };
+    }),
     riscos: lista(e.riscos, 30).map((r) => {
       const o = obj(r);
       return { titulo: txt(o.titulo, "", 120), texto: txt(o.texto, "", 1000) };

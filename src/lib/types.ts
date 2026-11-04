@@ -35,6 +35,31 @@ export interface Risco {
   texto: string;
 }
 
+export const CATEGORIAS_ATIVO = [
+  "Bolsas",
+  "Joias",
+  "Relógios",
+  "Barcos",
+  "Quadros de arte",
+  "Peças de arte",
+  "Barras de ouro",
+  "Itens colecionáveis",
+  "Outros",
+] as const;
+export type CategoriaAtivo = (typeof CATEGORIAS_ATIVO)[number];
+
+/** Bem fora do projeto das casas (não entra no lucro do projeto). */
+export interface Ativo {
+  id: string;
+  nome: string;
+  categoria: CategoriaAtivo;
+  dono: string; // sócio, empresa ou outro
+  dataAquisicao: string; // AAAA-MM-DD ou ""
+  custo: number; // valor pago
+  valorAtual: number; // avaliação atual
+  observacao: string; // nº de série, certificado, local de guarda etc.
+}
+
 export interface Premissas {
   casas: number;
   aberturaEmpresa: number; // total do projeto
@@ -70,4 +95,5 @@ export interface Dados {
     dias: number[];
   };
   riscos: Risco[];
+  ativos: Ativo[];
 }

@@ -137,3 +137,17 @@ export function resumo(d: Dados) {
     avisos,
   };
 }
+
+/** Resumo dos outros ativos (bens fora do projeto das casas). */
+export function resumoAtivos(d: Dados) {
+  const total = soma(d.ativos.map((a) => a.valorAtual));
+  const custo = soma(d.ativos.map((a) => a.custo));
+  const mapa = new Map<string, { categoria: string; qtd: number; custo: number; valor: number }>();
+  for (const a of d.ativos) {
+    const g = mapa.get(a.categoria) ?? { categoria: a.categoria, qtd: 0, custo: 0, valor: 0 };
+    g.qtd++; g.custo += a.custo; g.valor += a.valorAtual;
+    mapa.set(a.categoria, g);
+  }
+  const porCategoria = [...mapa.values()].sort((a, b) => b.valor - a.valor);
+  return { total, custo, valorizacao: total - custo, valorizacaoPct: custo ? (total - custo) / custo : 0, porCategoria };
+}

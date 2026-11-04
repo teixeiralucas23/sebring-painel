@@ -5,6 +5,7 @@ Painel financeiro do projeto das casas em Sebring, com área de edição para Lu
 - **`/`**: painel público, só leitura (o link que vai para os sócios).
 - **`/admin`**: área de edição com login. Altere lançamentos, premissas, sócios, cenários, riscos e textos e clique em **Salvar**: o painel atualiza na hora.
 - Lucro, ROE, valores por sócio, cenários, sensibilidade, fluxo de caixa e gráficos são **recalculados automaticamente** a partir das premissas e dos lançamentos.
+- **Outros ativos**: cadastro de bolsas, joias, relógios, barcos, quadros e peças de arte, barras de ouro e itens colecionáveis (dono, data, custo, valor atual, observação). Mostra total, valorização e divisão por categoria. Não entra no lucro do projeto das casas, e a seção só aparece no painel quando há pelo menos um item.
 - Cada vez que alguém salva, a versão anterior fica no **Histórico** (dá para restaurar).
 - Se os dois editarem ao mesmo tempo, quem salvar por último é avisado, e nada é sobrescrito sem querer.
 
