@@ -128,7 +128,7 @@ export async function apagarProjeto(slug: string, confirmacao: string): Promise<
 
 const dataOk = (s: string) => s === "" || (/^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)));
 
-export async function adicionarAcesso(slug: string, a: { nome: string; email: string; perfil: string; expiraEm: string }): Promise<Res> {
+export async function adicionarAcesso(slug: string, a: { nome: string; email: string; perfil: string; expiraEm: string; outros?: string[] }): Promise<Res> {
   return tentar(async () => {
     const usuario = await exigirUsuario();
     const nome = String(a.nome ?? "").trim().slice(0, 120);
@@ -137,8 +137,13 @@ export async function adicionarAcesso(slug: string, a: { nome: string; email: st
     if (!nome) return { ok: false, erro: "Informe o nome da pessoa." };
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erro: "E-mail inválido." };
     if (!dataOk(expiraEm)) return { ok: false, erro: "Data de validade inválida." };
-    if (!(await lerProjeto(slug))) return { ok: false, erro: "Projeto não encontrado." };
-    await criarAcesso(slug, { nome, email, perfil: String(a.perfil ?? "").slice(0, 60), expiraEm }, usuario);
+    const projetos = [slug, ...(Array.isArray(a.outros) ? a.outros.map(String) : [])].filter((x, i, l) => l.indexOf(x) === i).slice(0, 50);
+    if (projetos.length > 1 && !email) return { ok: false, erro: "Para convidar para mais de um projeto, informe o e-mail (é ele que junta os acessos num link só)." };
+    for (const p of projetos) if (!(await lerProjeto(p))) return { ok: false, erro: "Projeto não encontrado." };
+    for (const p of projetos) {
+      await criarAcesso(p, { nome, email, perfil: String(a.perfil ?? "").slice(0, 60), expiraEm }, usuario);
+      atualizarTelas(p);
+    }
     atualizarTelas(slug);
   });
 }

@@ -1,16 +1,27 @@
 import { notFound } from "next/navigation";
-import { lerProjeto } from "@/lib/db";
-import { permissao } from "@/lib/acesso";
+import { PRINCIPAL, lerProjeto } from "@/lib/db";
+import { abasDoVisitante, permissao } from "@/lib/acesso";
 import Painel from "./Painel";
 
 /** Abre o painel de um projeto, conferindo quem pode ver. */
 export default async function VerProjeto({ slug, conviteInvalido }: { slug: string; conviteInvalido?: boolean }) {
   const projeto = await lerProjeto(slug);
   if (!projeto) notFound();
-  const perm = await permissao(projeto);
+  const [perm, abas] = await Promise.all([permissao(projeto), abasDoVisitante()]);
+  const nav = abas.length > 1 && (
+    <nav className="abas-projetos">
+      <div className="wrap">
+        {abas.map((a) => (
+          <a key={a.slug} href={a.slug === PRINCIPAL ? "/" : `/p/${a.slug}`} className={a.slug === slug ? "ativa" : ""}>{a.nome}</a>
+        ))}
+      </div>
+    </nav>
+  );
 
   if (!perm.ok)
     return (
+      <>
+      {nav}
       <div className="restrito-box">
         <div className="card">
           <h1 style={{ fontSize: 20, color: "#1f3864" }}>Acesso restrito</h1>
@@ -23,20 +34,12 @@ export default async function VerProjeto({ slug, conviteInvalido }: { slug: stri
         </div>
         <p className="dica" style={{ marginTop: 14 }}><a href="/admin/login">Sou administrador</a></p>
       </div>
+      </>
     );
 
   return (
     <>
-      {perm.admin && (
-        <div className="barra-admin">
-          <div className="wrap">
-            <span>Você está vendo como administrador · {projeto.visibilidade === "publico" ? "projeto público" : "projeto restrito a convidados"}</span>
-            <a href={`/admin/p/${slug}`}>Editar</a>
-            <a href={`/admin/p/${slug}/acessos`}>Acessos</a>
-            <a href="/admin">Todos os projetos</a>
-          </div>
-        </div>
-      )}
+      {nav}
       <Painel dados={projeto.dados} atualizadoEm={projeto.atualizadoEm} atualizadoPor={projeto.atualizadoPor} />
     </>
   );

@@ -10,9 +10,9 @@ interface Linha {
 const dataBR = (s: string) => (s ? s.split("-").reverse().join("/") : "");
 
 export default function Acessos(props: {
-  slug: string; principal: boolean; nome: string; visibilidade: Visibilidade; admins: string[]; hoje: string; acessos: Linha[];
+  slug: string; principal: boolean; nome: string; visibilidade: Visibilidade; admins: string[]; hoje: string; acessos: Linha[]; outrosProjetos: { slug: string; nome: string }[];
 }) {
-  const { slug, principal, admins, hoje, acessos } = props;
+  const { slug, principal, admins, hoje, acessos, outrosProjetos } = props;
   const [pendente, start] = useTransition();
   const [msg, setMsg] = useState<{ tipo: "ok" | "erro"; texto: string } | null>(null);
   const [origem, setOrigem] = useState("");
@@ -24,7 +24,8 @@ export default function Acessos(props: {
   const infoMudou = nome !== props.nome || vis !== props.visibilidade;
 
   // novo convite
-  const [novo, setNovo] = useState({ nome: "", email: "", perfil: "Investidor", expiraEm: "" });
+  const vazio = { nome: "", email: "", perfil: "Investidor", expiraEm: "", outros: [] as string[] };
+  const [novo, setNovo] = useState(vazio);
 
   const rodar = (fn: () => Promise<{ ok: boolean; erro?: string }>, ok?: string, depois?: () => void) =>
     start(async () => {
@@ -138,12 +139,27 @@ export default function Acessos(props: {
           </div>
           <div className="campo"><label>Válido até (opcional)</label><input className="in" type="date" min={hoje} value={novo.expiraEm} onChange={(e) => setNovo({ ...novo, expiraEm: e.target.value })} /><small>Vazio = sem prazo</small></div>
         </div>
+        {outrosProjetos.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div className="campo"><label>Dar acesso também a</label></div>
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13.5 }}>
+              {outrosProjetos.map((p) => (
+                <label key={p.slug} style={{ display: "flex", gap: 6, alignItems: "center", cursor: "pointer" }}>
+                  <input type="checkbox" checked={novo.outros.includes(p.slug)}
+                    onChange={(e) => setNovo({ ...novo, outros: e.target.checked ? [...novo.outros, p.slug] : novo.outros.filter((x) => x !== p.slug) })} />
+                  {p.nome}
+                </label>
+              ))}
+            </div>
+            <small className="dica">Exige e-mail. Um único link libera todos os projetos marcados, e o painel mostra abas para trocar entre eles.</small>
+          </div>
+        )}
         <button className="btn verde" style={{ marginTop: 12 }} disabled={!novo.nome.trim() || pendente}
-          onClick={() => rodar(() => adicionarAcesso(slug, novo), `${novo.nome} convidado. Use "Copiar link" para enviar.`, () => setNovo({ nome: "", email: "", perfil: "Investidor", expiraEm: "" }))}>
+          onClick={() => rodar(() => adicionarAcesso(slug, novo), `${novo.nome} convidado. Use "Copiar link" para enviar.`, () => setNovo(vazio))}>
           + Gerar link de acesso
         </button>
         <p className="dica" style={{ marginTop: 12 }}>
-          Cada pessoa recebe um link pessoal que abre só este projeto, apenas para visualização. Ao revogar, a pessoa perde o acesso imediatamente.
+          Cada pessoa recebe um link pessoal, apenas para visualização. Se ela foi convidada com o mesmo e-mail em outros projetos, o link libera todos eles. Ao revogar, a pessoa perde o acesso àquele projeto imediatamente.
           {vis === "publico" && " Atenção: com o projeto público, qualquer pessoa com o endereço consegue ver, com ou sem convite."}
         </p>
       </div>

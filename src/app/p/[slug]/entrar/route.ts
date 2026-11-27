@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { PRINCIPAL, validarConvite } from "@/lib/db";
+import { PRINCIPAL, convitesDoEmail, validarConvite } from "@/lib/db";
 import { cookieConvite } from "@/lib/acesso";
 
 export const dynamic = "force-dynamic";
@@ -12,12 +12,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   const convite = await validarConvite(slug, token);
   if (!convite) return NextResponse.redirect(new URL(`${destino}?convite=invalido`, req.url));
   const res = NextResponse.redirect(new URL(destino, req.url));
-  res.cookies.set(cookieConvite(slug), token, {
+  const opcoes = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     path: "/",
     maxAge: 365 * 86400, // a validade real é conferida no banco a cada visita
-  });
+  };
+  // o mesmo link libera os outros projetos em que a pessoa (mesmo e-mail) foi convidada
+  for (const c of await convitesDoEmail(convite.email)) if (c.projeto !== slug) res.cookies.set(cookieConvite(c.projeto), c.token, opcoes);
+  res.cookies.set(cookieConvite(slug), token, opcoes);
   return res;
 }
