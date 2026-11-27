@@ -236,6 +236,32 @@ export async function excluirAcesso(id: number, slug: string) {
   await sql()`delete from acessos where id = ${id} and projeto = ${slug}`;
 }
 
+/**
+ * Projetos que o visitante pode abrir (para as abas do painel): os públicos, os restritos em que ele tem
+ * convite válido e, para administradores, todos. Não registra acesso.
+ */
+export async function projetosVisiveis(admin: boolean, tokens: Record<string, string>): Promise<{ slug: string; nome: string }[]> {
+  await garantirTabelas();
+  const pares = Object.entries(tokens).filter(([, t]) => t.length >= 20 && t.length <= 100);
+  const rows = await sql()`
+    select p.slug, p.nome from projetos p
+    where ${admin} or p.visibilidade = 'publico' or exists (
+      select 1 from acessos a where a.projeto = p.slug and not a.revogado
+        and (a.expira_em is null or a.expira_em >= current_date)
+        and a.token = any(${sql().array(pares.map(([, t]) => t))}))
+    order by (p.slug = ${PRINCIPAL}) desc, p.criado_em`;
+  return rows.map((r) => ({ slug: r.slug, nome: r.nome }));
+}
+
+/** Outros convites válidos da mesma pessoa (mesmo e-mail), para um único link liberar todos os projetos dela. */
+export async function convitesDoEmail(email: string): Promise<{ projeto: string; token: string }[]> {
+  if (!email) return [];
+  await garantirTabelas();
+  const rows = await sql()`select projeto, token from acessos
+                           where email = ${email} and not revogado and (expira_em is null or expira_em >= current_date)`;
+  return rows.map((r) => ({ projeto: r.projeto, token: r.token }));
+}
+
 /** Confere se o convite vale para o projeto (não revogado, dentro da validade) e registra o acesso. */
 export async function validarConvite(slug: string, token: string | undefined | null): Promise<Acesso | null> {
   if (!token || token.length < 20 || token.length > 100) return null;
