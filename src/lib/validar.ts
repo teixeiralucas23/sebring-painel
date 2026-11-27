@@ -40,6 +40,7 @@ export function validar(entrada: unknown): Dados {
       areaSqft: num(pm.areaSqft, P.areaSqft),
       gestao: num(pm.gestao, P.gestao),
       taxasEmprestimo: num(pm.taxasEmprestimo, P.taxasEmprestimo),
+      outros: num(pm.outros, 0),
       jurosAnual: num(pm.jurosAnual, P.jurosAnual),
       closing: num(pm.closing, P.closing),
       precoVenda: num(pm.precoVenda, P.precoVenda),
@@ -88,5 +89,6 @@ export function validar(entrada: unknown): Dados {
       const o = obj(r);
       return { titulo: txt(o.titulo, "", 120), texto: txt(o.texto, "", 1000) };
     }),
+    destaques: lista(e.destaques, 40).map((x) => txt(x, "", 300)),
   };
 }

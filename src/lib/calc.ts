@@ -21,6 +21,9 @@ export function dataLonga(s: string) {
   return `${String(d.getUTCDate()).padStart(2, "0")} ${MESES[d.getUTCMonth()].toUpperCase()} ${d.getUTCFullYear()}`;
 }
 
+/** "1 casa" / "2 casas" */
+export const casas = (n: number) => `${n} ${n === 1 ? "casa" : "casas"}`;
+
 export function fmt(n: number) {
   const v = Math.round(n);
   const s = "$" + Math.abs(v).toLocaleString("pt-BR");
@@ -39,7 +42,7 @@ export function criarModelo(d: Dados) {
   const liberacoes = d.lancamentos.filter((l) => l.emprestimo > 0);
   const emprestimoTotal = soma(liberacoes.map((l) => l.emprestimo));
   const equityTotal = soma(d.lancamentos.map((l) => l.aporte));
-  const fixo = p.aberturaEmpresa + N * (p.lote + p.construcao + p.gestao + p.taxasEmprestimo);
+  const fixo = p.aberturaEmpresa + N * (p.lote + p.construcao + p.gestao + p.taxasEmprestimo + p.outros);
 
   const quitacao = (dias: number) => addDias(p.dataListagem, dias);
   /** Juros simples diários sobre cada liberação, da data da liberação até a quitação (venda). */
@@ -81,7 +84,7 @@ export function fluxo(d: Dados, m: Modelo): LinhaFluxo[] {
       status: "marco" as Status, aporte: 0, emprestimo: 0, venda: 0, saidas: 0, auto: true,
     },
     {
-      id: "venda", data: m.quitacao(p.diasMercado), descricao: `Venda das ${m.N} casas — fechamento`,
+      id: "venda", data: m.quitacao(p.diasMercado), descricao: m.N === 1 ? "Venda da casa — fechamento" : `Venda das ${m.N} casas — fechamento`,
       status: p.statusVenda, aporte: 0, emprestimo: 0, venda: receita,
       saidas: m.emprestimoTotal + m.juros(p.diasMercado) + receita * m.cc, auto: true,
     },
@@ -117,7 +120,7 @@ export function resumo(d: Dados) {
   const saidasLancadas = soma(d.lancamentos.map((l) => l.saidas));
   if (Math.abs(saidasLancadas - m.fixo) > 1)
     avisos.push(
-      `As saídas dos lançamentos somam ${fmt(saidasLancadas)}, mas os custos das premissas (abertura + lote + construção + gestão + taxas do empréstimo) somam ${fmt(m.fixo)}. Diferença de ${fmt(saidasLancadas - m.fixo)} — o fluxo de caixa não vai bater com o lucro.`,
+      `As saídas dos lançamentos somam ${fmt(saidasLancadas)}, mas os custos das premissas (abertura + lote + construção + gestão + taxas do empréstimo + outros) somam ${fmt(m.fixo)}. Diferença de ${fmt(saidasLancadas - m.fixo)} — o fluxo de caixa não vai bater com o lucro.`,
     );
   const negativo = linhas.find((l) => l.caixa < -0.5);
   if (negativo) avisos.push(`O caixa do projeto fica negativo em ${dataCurta(negativo.data)} (${fmt(negativo.caixa)}). Falta aporte ou empréstimo antes dessa data.`);

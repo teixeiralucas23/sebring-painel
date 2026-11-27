@@ -2,8 +2,13 @@
 
 Painel financeiro do projeto das casas em Sebring, com área de edição para Lucas e Tulio.
 
-- **`/`**: painel público, só leitura (o link que vai para os sócios).
-- **`/admin`**: área de edição com login. Altere lançamentos, premissas, sócios, cenários, riscos e textos e clique em **Salvar**: o painel atualiza na hora.
+- **`/`**: painel do projeto principal (OPD — 2 casas), o link que já foi para os sócios.
+- **`/p/<projeto>`**: painel de cada projeto (ex.: `/p/2201-sunrise-drive`).
+- **`/admin`**: aba **Projetos** com login — lista os projetos e cria novos (em branco ou copiando outro).
+  Em cada projeto: **Editar** (lançamentos, premissas, sócios, cenários, diferenciais, riscos e textos) e **Acessos**.
+- **Acessos por projeto**: escolha *Qualquer pessoa com o link* ou *Só convidados*. Para convidar, gere um link pessoal
+  (nome, e-mail, perfil e validade opcional) e envie à pessoa. O link abre só aquele projeto, apenas para leitura.
+  Dá para revogar, reativar, gerar link novo e ver o último acesso. Administradores (`ADMIN_USERS`) veem e editam tudo.
 - Lucro, ROE, valores por sócio, cenários, sensibilidade, fluxo de caixa e gráficos são **recalculados automaticamente** a partir das premissas e dos lançamentos.
 - **Outros ativos**: cadastro de bolsas, joias, relógios, barcos, quadros e peças de arte, barras de ouro e itens colecionáveis (dono, data, custo, valor atual, observação). Mostra total, valorização e divisão por categoria. Não entra no lucro do projeto das casas, e a seção só aparece no painel quando há pelo menos um item.
 - Cada vez que alguém salva, a versão anterior fica no **Histórico** (dá para restaurar).

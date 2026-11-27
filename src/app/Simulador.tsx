@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import type { Dados } from "@/lib/types";
-import { criarModelo, fmt } from "@/lib/calc";
+import { casas, criarModelo, fmt } from "@/lib/calc";
 
 export default function Simulador({ dados }: { dados: Dados }) {
   const m = useMemo(() => criarModelo(dados), [dados]);
@@ -32,7 +32,7 @@ export default function Simulador({ dados }: { dados: Dados }) {
       </div>
       <div className="out">
         <div><div className="l">Juros do empréstimo</div><div className="v">{fmt(m.juros(dias))}</div></div>
-        <div><div className="l">Custo total · {m.N} casas</div><div className="v">{fmt(m.custo(preco, dias))}</div></div>
+        <div><div className="l">Custo total · {casas(m.N)}</div><div className="v">{fmt(m.custo(preco, dias))}</div></div>
         <div><div className="l">Lucro líquido</div><div className={cls}>{fmt(lucro)}</div></div>
         <div><div className="l">Por sócio ({pctSocio}%)</div><div className={cls}>{fmt((lucro * pctSocio) / 100)}</div></div>
       </div>

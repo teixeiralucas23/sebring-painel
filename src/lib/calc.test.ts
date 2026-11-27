@@ -36,3 +36,25 @@ test("aviso quando lançamentos não batem com premissas", () => {
   d.premissas.construcao += 5000;
   assert.equal(resumo(d).avisos.length, 1);
 });
+
+test("2201 Sunrise Drive reproduz a planilha de viabilidade", async () => {
+  const { SEED_SUNRISE } = await import("./seedSunrise");
+  const s = resumo(SEED_SUNRISE);
+  assert.equal(r(s.m.fixo), 368000); // C9 "Total custos" da planilha
+  assert.equal(r(s.m.equityTotal), 150000); // recursos próprios
+  assert.equal(r(s.m.emprestimoTotal), 218000); // lender
+  assert.equal(r(s.receita), 469000); // cenário moderado
+  assert.equal(r(s.lucro), 72860); // 469.000 − 6% − 368.000
+  assert.equal((s.roe * 100).toFixed(1), "48.6");
+  const m = criarModelo(SEED_SUNRISE);
+  assert.equal(r(m.lucro(489000, 90)), 91660);
+  assert.equal(r(m.lucro(439000, 90)), 44660);
+  assert.deepEqual(s.avisos, []);
+});
+
+test("modelo em branco não gera erro", async () => {
+  const { modeloEmBranco } = await import("./modelo");
+  const s = resumo(modeloEmBranco("Teste", "2026-11-26"));
+  assert.equal(s.lucro, 0);
+  assert.ok(Number.isFinite(s.margem) && Number.isFinite(s.roe));
+});

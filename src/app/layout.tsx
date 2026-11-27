@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "OPD Development — Sebring FL | Painel do Projeto",
+  title: "Painel de Projetos — Sebring FL",
   robots: { index: false, follow: false },
 };
 
