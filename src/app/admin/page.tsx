@@ -1,40 +1,52 @@
 import { cookies } from "next/headers";
 import { COOKIE, lerSessao, nomeExibicao } from "@/lib/auth";
-import { lerPainel, listarHistorico } from "@/lib/db";
-import Editor from "./Editor";
-import { sair } from "./actions";
+import { PRINCIPAL, listarProjetos } from "@/lib/db";
+import { fmt, pct, resumo } from "@/lib/calc";
+import Topo from "./Topo";
+import NovoProjeto from "./NovoProjeto";
 
 export const dynamic = "force-dynamic";
 
 const quando = (d: Date) =>
   d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/New_York" });
 
-export default async function Admin() {
+export default async function Projetos() {
   const usuario = (await lerSessao((await cookies()).get(COOKIE)?.value)) ?? "";
-  const [painel, historico] = await Promise.all([lerPainel(), listarHistorico()]);
+  const projetos = await listarProjetos();
   return (
     <>
-      <div className="topo-admin">
-        <div className="wrap">
-          <b>Editar painel</b>
-          <span className="dica" style={{ color: "#cfe0ff" }}>
-            Última alteração: {quando(painel.atualizadoEm)} por {nomeExibicao(painel.atualizadoPor)}
-          </span>
-          <span className="esp" />
-          <a href="/" target="_blank">Ver painel ↗</a>
-          <span style={{ fontSize: 13 }}>Olá, {nomeExibicao(usuario)}</span>
-          <form action={sair}><button className="btn cinza peq">Sair</button></form>
-        </div>
-      </div>
+      <Topo usuario={usuario} aba="projetos" />
       <div className="wrap">
-        <Editor
-          inicial={painel.dados}
-          versao={painel.atualizadoEm.toISOString()}
-          historico={historico.map((h) => ({
-            id: h.id,
-            texto: `Versão de ${quando(h.salvoEm)} (${nomeExibicao(h.salvoPor)}) — substituída em ${quando(h.substituidoEm)} por ${nomeExibicao(h.substituidoPor)}`,
-          }))}
-        />
+        <h2>Projetos <span className="en">— {projetos.length} cadastrado{projetos.length === 1 ? "" : "s"}</span></h2>
+        <div className="projetos">
+          {projetos.map((p) => {
+            const r = resumo(p.dados);
+            const link = p.slug === PRINCIPAL ? "/" : `/p/${p.slug}`;
+            return (
+              <div className="card projeto" key={p.slug}>
+                <h3>{p.nome}</h3>
+                <div className="slug">sebring.vercel.app{link}{p.slug === PRINCIPAL ? " · página inicial" : ""}</div>
+                <span className={"vis " + p.visibilidade}>
+                  {p.visibilidade === "publico" ? "Público" : `Restrito · ${p.acessosAtivos} convidado${p.acessosAtivos === 1 ? "" : "s"} ativo${p.acessosAtivos === 1 ? "" : "s"}`}
+                </span>
+                <div className="mini" style={{ marginTop: 12 }}>
+                  <div><span>Custo total</span><b>{fmt(r.custo)}</b></div>
+                  <div><span>Lucro (base)</span><b className={r.lucro >= 0 ? "pos" : "neg"}>{fmt(r.lucro)}</b></div>
+                  <div><span>ROE</span><b>{pct(r.roe)}</b></div>
+                </div>
+                <p className="dica" style={{ marginTop: 10 }}>Última alteração: {quando(p.atualizadoEm)} por {nomeExibicao(p.atualizadoPor)}</p>
+                <div className="acoes">
+                  <a className="btn" href={`/admin/p/${p.slug}`}>Editar</a>
+                  <a className="btn cinza" href={`/admin/p/${p.slug}/acessos`}>Acessos</a>
+                  <a className="btn cinza" href={link} target="_blank">Ver painel ↗</a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <h2>Novo projeto</h2>
+        <NovoProjeto projetos={projetos.map((p) => ({ slug: p.slug, nome: p.nome }))} />
       </div>
     </>
   );

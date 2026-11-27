@@ -87,3 +87,25 @@ table.ed input.in,table.ed select.in{padding:6px 7px;font-size:13px}
 .scroll{overflow-x:auto}
 tr.tot.geral td{background:#1f3864;color:#fff}
 tr.tot.verde td{background:#d6f0e2}
+
+/* ---- projetos e acessos ---- */
+.destaques{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.destaques li{background:#f6f8fc;border-left:3px solid #1e8e5a;border-radius:8px;padding:10px 14px;font-size:13.5px}
+.abas{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.abas a{color:#cfe0ff;font-size:13px;font-weight:700;padding:7px 13px;border-radius:8px 8px 0 0;text-decoration:none}
+.abas a.ativa{background:#eef1f6;color:#1f3864}
+.abas .sep{color:#5a6f99;align-self:center;padding:0 4px}
+.barra-admin{background:#fff4dd;border-bottom:1px solid #f0c674;font-size:12.5px;color:#7a4f00;padding:7px 0}
+.barra-admin .wrap{display:flex;gap:14px;flex-wrap:wrap;padding-bottom:0}
+.barra-admin a{color:#1f3864;font-weight:700}
+.projetos{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+.projeto h3{font-size:17px;color:#1f3864}
+.projeto .slug{font-size:12px;color:#8494ab}
+.projeto .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.projeto .acoes a{text-decoration:none}
+.vis{display:inline-block;padding:2.5px 9px;border-radius:11px;font-size:10.5px;font-weight:700;margin-top:8px}
+.vis.publico{background:#e6ebf4;color:#4a5a75}.vis.restrito{background:#ffe9bd;color:#8a5a06}
+.opcao{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #d3dae6;border-radius:9px;cursor:pointer;font-size:13.5px}
+.opcao.on{border-color:#2d5490;background:#f3f6fc}
+.opcao small{display:block;color:#7b8aa3;font-size:12px}
+.restrito-box{max-width:460px;margin:14vh auto;padding:0 16px;text-align:center}

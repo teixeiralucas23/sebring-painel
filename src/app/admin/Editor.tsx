@@ -40,7 +40,7 @@ function Campo({ label, dica, largo, children }: { label: string; dica?: string;
 const hoje = () => new Date().toISOString().slice(0, 10);
 const novoId = () => "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-export default function Editor({ inicial, versao, historico }: { inicial: Dados; versao: string; historico: { id: number; texto: string }[] }) {
+export default function Editor({ slug, link, inicial, versao, historico }: { slug: string; link: string; inicial: Dados; versao: string; historico: { id: number; texto: string }[] }) {
   const [d, setD] = useState<Dados>(inicial);
   const [salvo, setSalvo] = useState<string>(JSON.stringify(inicial));
   const [msg, setMsg] = useState<{ tipo: "ok" | "erro"; texto: string } | null>(null);
@@ -70,7 +70,7 @@ export default function Editor({ inicial, versao, historico }: { inicial: Dados;
     setMsg(null);
     const ordenado = { ...d, lancamentos: [...d.lancamentos].sort((a, b) => a.data.localeCompare(b.data)) };
     start(async () => {
-      const res = await salvar(ordenado, versao);
+      const res = await salvar(slug, ordenado, versao);
       if (res.ok) {
         setD(ordenado);
         setSalvo(JSON.stringify(ordenado));
@@ -82,7 +82,7 @@ export default function Editor({ inicial, versao, historico }: { inicial: Dados;
   function onRestaurar(id: number, texto: string) {
     if (!confirm(`Voltar o painel para esta versão?\n\n${texto}\n\nA versão atual fica guardada no histórico.`)) return;
     start(async () => {
-      const res = await restaurar(id);
+      const res = await restaurar(slug, id);
       if (res.ok) { setSalvo(JSON.stringify(d)); window.location.reload(); }
       else setMsg({ tipo: "erro", texto: res.erro ?? "Erro ao restaurar." });
     });
@@ -163,7 +163,8 @@ export default function Editor({ inicial, versao, historico }: { inicial: Dados;
         <Campo label="Gestão da obra (por casa)"><Num value={p.gestao} step={100} onChange={(v) => prem("gestao", v)} /></Campo>
         <Campo label="Abertura da empresa (total)"><Num value={p.aberturaEmpresa} step={100} onChange={(v) => prem("aberturaEmpresa", v)} /></Campo>
         <Campo label="Taxas do empréstimo (por casa)" dica="Pontos e fees do hard money"><Num value={p.taxasEmprestimo} step={100} onChange={(v) => prem("taxasEmprestimo", v)} /></Campo>
-        <Campo label="Juros (% ao ano)"><Num value={p.jurosAnual} step={0.25} onChange={(v) => prem("jurosAnual", v)} /></Campo>
+        <Campo label="Outros custos (por casa)"><Num value={p.outros} step={100} onChange={(v) => prem("outros", v)} /></Campo>
+        <Campo label="Juros (% ao ano)" dica="Use 0 se os juros já estão nas taxas"><Num value={p.jurosAnual} step={0.25} onChange={(v) => prem("jurosAnual", v)} /></Campo>
         <Campo label="Closing costs na venda (%)"><Num value={p.closing} step={0.25} onChange={(v) => prem("closing", v)} /></Campo>
       </div>
 
@@ -248,6 +249,17 @@ export default function Editor({ inicial, versao, historico }: { inicial: Dados;
         <button className="btn cinza" style={{ marginTop: 12 }} onClick={() => set("ativos", [...d.ativos, { id: "a" + Date.now().toString(36), nome: "", categoria: "Bolsas", dono: "", dataAquisicao: "", custo: 0, valorAtual: 0, observacao: "" }])}>+ Adicionar ativo</button>
       </div>
 
+      <h2>Diferenciais do imóvel <span className="en">— aparecem no painel quando houver pelo menos um</span></h2>
+      <div className="card">
+        {d.destaques.map((x, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <input className="in" value={x} placeholder="Ex.: Piso porcelanato" onChange={(e) => set("destaques", d.destaques.map((y, j) => (j === i ? e.target.value : y)))} />
+            <button className="btn x" onClick={() => set("destaques", d.destaques.filter((_, j) => j !== i))}>✕</button>
+          </div>
+        ))}
+        <button className="btn cinza" onClick={() => set("destaques", [...d.destaques, ""])}>+ Adicionar diferencial</button>
+      </div>
+
       <h2>Riscos</h2>
       <div className="card">
         <p className="dica" style={{ marginBottom: 10 }}>Os textos dos riscos não se recalculam sozinhos — revise os números citados quando as premissas mudarem.</p>
@@ -282,7 +294,7 @@ export default function Editor({ inicial, versao, historico }: { inicial: Dados;
 
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: "#fff", borderTop: "1px solid #d3dae6", boxShadow: "0 -4px 14px rgba(20,35,70,.08)", zIndex: 30 }}>
         <div className="wrap" style={{ display: "flex", gap: 10, alignItems: "center", padding: "10px 20px", flexWrap: "wrap" }}>
-          {msg ? <div className={msg.tipo} style={{ flex: 1 }}>{msg.texto}</div> : <span className="dica" style={{ flex: 1 }}>{sujo ? "Você tem alterações não salvas." : "Nenhuma alteração pendente."}</span>}
+          {msg ? <div className={msg.tipo} style={{ flex: 1 }}>{msg.texto}</div> : <span className="dica" style={{ flex: 1 }}>{sujo ? "Você tem alterações não salvas." : "Nenhuma alteração pendente."} <a href={link} target="_blank">Ver painel ↗</a></span>}
           <button className="btn cinza" disabled={!sujo || pendente} onClick={() => { if (confirm("Descartar as alterações não salvas?")) { setD(JSON.parse(salvo)); setMsg(null); } }}>Descartar</button>
           <button className="btn verde" disabled={!sujo || pendente} onClick={onSalvar}>{pendente ? "Salvando…" : "Salvar alterações"}</button>
         </div>

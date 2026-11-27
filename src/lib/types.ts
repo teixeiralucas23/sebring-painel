@@ -68,6 +68,7 @@ export interface Premissas {
   areaSqft: number; // por casa
   gestao: number; // por casa
   taxasEmprestimo: number; // por casa
+  outros: number; // outros custos, por casa
   jurosAnual: number; // % a.a.
   closing: number; // % sobre a venda
   precoVenda: number; // por casa
@@ -96,4 +97,36 @@ export interface Dados {
   };
   riscos: Risco[];
   ativos: Ativo[];
+  destaques: string[]; // diferenciais do imóvel (aparecem no painel quando houver)
 }
+
+export type Visibilidade = "publico" | "restrito";
+export const VISIBILIDADE_LABEL: Record<Visibilidade, string> = {
+  publico: "Público — qualquer pessoa com o link",
+  restrito: "Restrito — só convidados",
+};
+
+export interface ProjetoInfo {
+  slug: string;
+  nome: string;
+  visibilidade: Visibilidade;
+  criadoEm: Date;
+  atualizadoEm: Date;
+  atualizadoPor: string;
+}
+
+export interface Acesso {
+  id: number;
+  projeto: string;
+  nome: string;
+  email: string;
+  perfil: string;
+  token: string;
+  expiraEm: string; // AAAA-MM-DD ou ""
+  revogado: boolean;
+  criadoEm: Date;
+  criadoPor: string;
+  ultimoAcesso: Date | null;
+}
+
+export const PERFIS_ACESSO = ["Sócio", "Investidor", "Lender", "Construtora", "Corretor", "Contador", "Assessor", "Outro"] as const;
